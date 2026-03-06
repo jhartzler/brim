@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import UserNotifications
 
 @MainActor
 final class OverlayController {
@@ -55,6 +56,14 @@ final class OverlayController {
     }
 
     private func flashAndHide(timerEngine: TimerEngine) {
+        // Send notification
+        let content = UNMutableNotificationContent()
+        content.title = "Brim"
+        content.body = "Timer complete!"
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+
         let flashDuration = 0.15
         var delay = 0.0
 
