@@ -8,6 +8,7 @@ let package = Package(
         .executableTarget(
             name: "Brim",
             path: "Sources/Brim",
+            exclude: ["Info.plist"],
             resources: [
                 .process("Resources")
             ]

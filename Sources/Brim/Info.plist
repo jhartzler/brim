@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.org/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.brim.timer</string>
+    <key>CFBundleName</key>
+    <string>Brim</string>
+    <key>CFBundleExecutable</key>
+    <string>Brim</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
     <key>LSUIElement</key>
     <true/>
     <key>CFBundleURLTypes</key>
