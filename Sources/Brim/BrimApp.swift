@@ -9,7 +9,7 @@ struct BrimApp: App {
         MenuBarExtra {
             MenuBarView(timerEngine: timerEngine)
         } label: {
-            Image(systemName: timerEngine.isRunning ? "timer" : "timer.circle")
+            Image(nsImage: MenuBarIcon.cap())
         }
     }
 }
