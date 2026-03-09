@@ -3,25 +3,23 @@ import UserNotifications
 
 @MainActor
 final class BrimAppDelegate: NSObject, NSApplicationDelegate {
-    var overlayController: OverlayController?
-    var timerEngine: TimerEngine?
+    private var overlayController: OverlayController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard let timerEngine else { return }
-        overlayController = OverlayController(timerEngine: timerEngine)
-
+        NSApp.setActivationPolicy(.accessory)
+        overlayController = OverlayController(timerEngine: TimerEngine.shared)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let timerEngine else { return }
         for url in urls {
-            handleURL(url, timerEngine: timerEngine)
+            handleURL(url)
         }
     }
 
-    private func handleURL(_ url: URL, timerEngine: TimerEngine) {
+    private func handleURL(_ url: URL) {
         guard url.scheme == "brim" else { return }
+        let timerEngine = TimerEngine.shared
 
         switch url.host {
         case "start":

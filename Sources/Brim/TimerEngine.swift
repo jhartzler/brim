@@ -3,6 +3,7 @@ import Combine
 
 @MainActor
 final class TimerEngine: ObservableObject {
+    static let shared = TimerEngine()
     enum State: Equatable {
         case idle
         case running

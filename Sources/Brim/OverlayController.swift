@@ -5,20 +5,16 @@ import UserNotifications
 @MainActor
 final class OverlayController {
     private let window: BarOverlayWindow
-    private let barView: BarOverlayView
     private var cancellables = Set<AnyCancellable>()
 
     init(timerEngine: TimerEngine) {
         window = BarOverlayWindow()
-        barView = BarOverlayView(frame: window.contentView!.bounds)
-        barView.autoresizingMask = [.width, .height]
-        window.contentView?.addSubview(barView)
 
-        // Observe timer progress
+        // Observe timer progress — resize window width
         timerEngine.$progress
             .receive(on: RunLoop.main)
             .sink { [weak self] progress in
-                self?.barView.progress = progress
+                self?.window.reposition(progress: progress)
             }
             .store(in: &cancellables)
 
@@ -56,7 +52,6 @@ final class OverlayController {
     }
 
     private func flashAndHide(timerEngine: TimerEngine) {
-        // Send notification
         let content = UNMutableNotificationContent()
         content.title = "Brim"
         content.body = "Timer complete!"
@@ -69,11 +64,11 @@ final class OverlayController {
 
         for _ in 0..<3 {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.barView.barColor = .white
+                self?.window.backgroundColor = .white
             }
             delay += flashDuration
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.barView.barColor = .systemBlue
+                self?.window.backgroundColor = .systemBlue
             }
             delay += flashDuration
         }

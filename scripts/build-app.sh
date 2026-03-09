@@ -29,5 +29,5 @@ fi
 
 echo "Built: ${APP_BUNDLE}"
 echo ""
-echo "To run:  open build/Brim.app"
+echo "To run:  build/Brim.app/Contents/MacOS/Brim &"
 echo "To install: cp -R build/Brim.app /Applications/"
