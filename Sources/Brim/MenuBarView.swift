@@ -1,10 +1,14 @@
 import SwiftUI
 
-struct MenuBarView: View {
+package struct MenuBarView: View {
     @ObservedObject var timerEngine: TimerEngine
     @State private var customMinutes: String = ""
 
-    var body: some View {
+    package init(timerEngine: TimerEngine) {
+        self.timerEngine = timerEngine
+    }
+
+    package var body: some View {
         Group {
             if timerEngine.isRunning {
                 let remaining = Int(timerEngine.progress * 100)

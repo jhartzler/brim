@@ -3,11 +3,11 @@ import Combine
 import UserNotifications
 
 @MainActor
-final class OverlayController {
+package final class OverlayController {
     private let window: BarOverlayWindow
     private var cancellables = Set<AnyCancellable>()
 
-    init(timerEngine: TimerEngine) {
+    package init(timerEngine: TimerEngine) {
         window = BarOverlayWindow()
 
         // Observe timer progress — resize window width

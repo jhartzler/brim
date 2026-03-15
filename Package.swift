@@ -5,13 +5,23 @@ let package = Package(
     name: "Brim",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(
-            name: "Brim",
+        .target(
+            name: "BrimLib",
             path: "Sources/Brim",
             exclude: ["Info.plist"],
             resources: [
                 .process("Resources")
             ]
+        ),
+        .executableTarget(
+            name: "Brim",
+            dependencies: ["BrimLib"],
+            path: "Sources/BrimApp"
+        ),
+        .testTarget(
+            name: "BrimTests",
+            dependencies: ["BrimLib"],
+            path: "Tests/BrimTests"
         )
     ]
 )

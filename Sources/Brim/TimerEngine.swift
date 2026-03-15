@@ -2,24 +2,24 @@ import Foundation
 import Combine
 
 @MainActor
-final class TimerEngine: ObservableObject {
-    static let shared = TimerEngine()
-    enum State: Equatable {
+package final class TimerEngine: ObservableObject {
+    package static let shared = TimerEngine()
+    package enum State: Equatable {
         case idle
         case running
         case finished
     }
 
-    @Published private(set) var state: State = .idle
-    @Published private(set) var progress: Double = 1.0  // 1.0 = full, 0.0 = done
+    @Published package private(set) var state: State = .idle
+    @Published package private(set) var progress: Double = 1.0  // 1.0 = full, 0.0 = done
 
     private var startDate: Date?
     private var duration: TimeInterval = 0
     private var timer: Timer?
 
-    var isRunning: Bool { state == .running }
+    package var isRunning: Bool { state == .running }
 
-    func start(minutes: Double) {
+    package func start(minutes: Double) {
         stop()
         duration = minutes * 60
         startDate = Date()
@@ -33,7 +33,7 @@ final class TimerEngine: ObservableObject {
         }
     }
 
-    func stop() {
+    package func stop() {
         timer?.invalidate()
         timer = nil
         startDate = nil
@@ -54,7 +54,7 @@ final class TimerEngine: ObservableObject {
         }
     }
 
-    func acknowledge() {
+    package func acknowledge() {
         state = .idle
         progress = 1.0
     }
