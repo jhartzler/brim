@@ -42,28 +42,28 @@ Layer properties:
 One continuous `CGPath` tracing this route:
 
 ```
-(right edge, 2px down) ---- (notch right corner)
-                                     |  8px radius curve
-                              (notch right side, vertical)
-                                     |
-                        8px curve -- (under notch) -- 8px curve
-                              |
-                       (notch left side, vertical)
-                 8px radius curve
-                       |
-(notch left corner) ---------- (left edge, 2px down)
+(left edge, 2px down) ---------- (notch left corner)
+                                          |  8px radius curve
+                                   (notch left side, vertical)
+                                          |
+                             8px curve -- (under notch) -- 8px curve
+                                                    |
+                                             (notch right side, vertical)
+                                       8px radius curve
+                                             |
+                              (notch right corner) ---- (right edge, 2px down)
 ```
 
-The path starts at the right edge of the screen and ends at the left edge. The 2px vertical offset (half of `lineWidth`) keeps the 4px stroke visually flush with the top of the screen.
+The path starts at the left edge and ends at the right edge. The 2px vertical offset (half of `lineWidth`) keeps the 4px stroke visually flush with the top of the screen.
 
 Corner radius: 8px initially. Future follow-on to read actual notch radius (possibly via a third-party library).
 
 ### Progress Mapping
 
-- `strokeStart = 0` (right edge)
+- `strokeStart = 0` (left edge)
 - `strokeEnd` = timer progress (1.0 = full, 0.0 = empty)
 
-As time depletes, `strokeEnd` decreases. The visible stroke shrinks from the left end back toward the right. The 30fps timer updates set `strokeEnd` directly — `CAShapeLayer` handles the rendering.
+As time depletes, `strokeEnd` decreases. The visible stroke shrinks from the right end back toward the left — matching the current non-notch depletion direction. The right segment disappears first, then the U-wrap, then the left segment. The 30fps timer updates set `strokeEnd` directly — `CAShapeLayer` handles the rendering.
 
 Note: `CAShapeLayer` animations must be disabled for per-frame updates (set `CATransaction.setDisableActions(true)`) to avoid implicit animation lag.
 
