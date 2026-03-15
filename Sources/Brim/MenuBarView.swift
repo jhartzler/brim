@@ -37,6 +37,10 @@ struct MenuBarView: View {
                 .padding(.horizontal, 8)
             }
             Divider()
+            Button("Settings...") {
+                SettingsPanel.shared.toggle()
+            }
+            Divider()
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }

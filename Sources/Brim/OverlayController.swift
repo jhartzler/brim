@@ -34,6 +34,14 @@ final class OverlayController {
             }
             .store(in: &cancellables)
 
+        // Observe bar color changes
+        Settings.shared.$barColor
+            .receive(on: RunLoop.main)
+            .sink { [weak self] color in
+                self?.window.backgroundColor = color
+            }
+            .store(in: &cancellables)
+
         // Reposition on screen changes
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
@@ -59,16 +67,18 @@ final class OverlayController {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
 
+        let barColor = Settings.shared.barColor
+        let flashColor = Settings.shared.flashColor
         let flashDuration = 0.15
         var delay = 0.0
 
         for _ in 0..<3 {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.window.backgroundColor = .white
+                self?.window.backgroundColor = flashColor
             }
             delay += flashDuration
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.window.backgroundColor = .systemBlue
+                self?.window.backgroundColor = barColor
             }
             delay += flashDuration
         }

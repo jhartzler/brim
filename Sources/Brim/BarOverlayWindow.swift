@@ -24,7 +24,7 @@ final class BarOverlayWindow: NSWindow {
         level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 1)
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         isOpaque = false
-        backgroundColor = .systemBlue
+        backgroundColor = Settings.shared.barColor
         hasShadow = false
         ignoresMouseEvents = true
         isReleasedWhenClosed = false
