@@ -15,18 +15,21 @@ On launch and `didChangeScreenParametersNotification`, check `NSScreen.main?.saf
 - `safeAreaInsets.top == 0` (no notch): use current behavior — 4px-tall window, `backgroundColor` as the bar, no custom drawing.
 - `safeAreaInsets.top > 0` (notch present): use notch-wrapping mode with `CAShapeLayer`.
 
-Notch geometry is derived from `safeAreaInsets`. The left inset gives the left segment width, the right inset gives the right segment width, and the notch width is `screenWidth - left - right`. The notch height is `safeAreaInsets.top`.
+Notch geometry is derived from `NSScreen.auxiliaryTopLeftArea` and `NSScreen.auxiliaryTopRightArea` (macOS 12+). These give the usable rectangles on either side of the notch. The notch region is the gap between them: its left edge is `auxiliaryTopLeftArea.maxX`, its right edge is `auxiliaryTopRightArea.origin.x`, and its height is `safeAreaInsets.top`. On non-notch screens, these auxiliary areas may be nil or absent.
 
 ## Window (Notch Mode)
 
 - Height: `safeAreaInsets.top + barHeight` (~36px) to fit the U-wrap beneath the notch.
 - Width: full screen width.
 - `backgroundColor = .clear` (not the bar color — drawing is via layer).
+- `isOpaque = false` (required — `.clear` on an opaque window produces black, not transparency).
+- `hasShadow = false`.
+- Window positioned at `y = screen.frame.maxY - (safeAreaInsets.top + barHeight)` so the top edge is flush with the screen top.
 - All existing properties preserved: borderless, `ignoresMouseEvents = true`, `constrainFrameRect` override, level `mainMenuWindow + 1`, `canJoinAllSpaces`, `stationary`, `ignoresCycle`.
 
 ## Drawing: CAShapeLayer
 
-A `CAShapeLayer` is added to the content view's backing layer (`wantsLayer = true`).
+The content view gets `wantsLayer = true`. A `CAShapeLayer` is added as a **sublayer** of `contentView.layer` (not as the view's own backing layer). This avoids the `draw()` / `updateLayer()` question entirely.
 
 Layer properties:
 - `lineWidth = 4` (bar thickness)
@@ -74,7 +77,7 @@ On `didChangeScreenParametersNotification`, re-detect notch presence. If the use
 
 ## Color Updates
 
-`Settings.shared.$barColor` subscription updates `strokeColor` on the `CAShapeLayer` in notch mode (instead of `window.backgroundColor` in non-notch mode).
+`Settings.shared.$barColor` subscription must be mode-aware: updates `strokeColor` on the `CAShapeLayer` in notch mode, or `window.backgroundColor` in non-notch mode. The flash animation must also be mode-aware — toggling `strokeColor` instead of `backgroundColor` in notch mode. Care must be taken that the color subscription doesn't interfere with the flash sequence timing (the subscription fires on any color change and could reset the flash mid-animation).
 
 ## Flash Animation
 
@@ -88,6 +91,6 @@ The existing flash-and-hide sequence (3x color toggle + fade) adapts to notch mo
 
 ## Out of Scope
 
-- Matching exact Apple notch corner radius (follow-on).
+- Matching exact Apple notch corner radius (follow-on — tracked as backlog item).
 - Gradient or multi-color bar effects.
 - Multiple display support (uses `NSScreen.main` only, same as today).
