@@ -6,19 +6,18 @@ import UserNotifications
 package final class OverlayController {
     private let window: BarOverlayWindow
     private var cancellables = Set<AnyCancellable>()
+    private var isFlashing = false
 
     package init(timerEngine: TimerEngine) {
         window = BarOverlayWindow()
 
-        // Observe timer progress — resize window width
         timerEngine.$progress
             .receive(on: RunLoop.main)
             .sink { [weak self] progress in
-                self?.window.reposition(progress: progress)
+                self?.window.updateProgress(progress)
             }
             .store(in: &cancellables)
 
-        // Observe timer state for show/hide and completion flash
         timerEngine.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
@@ -34,24 +33,39 @@ package final class OverlayController {
             }
             .store(in: &cancellables)
 
-        // Observe bar color changes
         Settings.shared.$barColor
             .receive(on: RunLoop.main)
             .sink { [weak self] color in
-                self?.window.backgroundColor = color
+                self?.updateBarColor(color)
             }
             .store(in: &cancellables)
 
-        // Reposition on screen changes
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
-                self?.window.reposition()
+                self?.handleScreenChange(timerEngine: timerEngine)
             }
             .store(in: &cancellables)
     }
 
+    private func updateBarColor(_ color: NSColor) {
+        guard !isFlashing else { return }  // Don't interfere with flash sequence
+        if window.hasNotch {
+            window.shapeLayer?.strokeColor = color.cgColor
+        } else {
+            window.backgroundColor = color
+        }
+    }
+
+    private func handleScreenChange(timerEngine: TimerEngine) {
+        window.rebuild()
+        // Re-show window if timer is currently running
+        if timerEngine.state == .running {
+            show()
+        }
+    }
+
     private func show() {
-        window.reposition()
+        window.repositionFrame()
         window.orderFrontRegardless()
     }
 
@@ -67,6 +81,7 @@ package final class OverlayController {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
 
+        isFlashing = true
         let barColor = Settings.shared.barColor
         let flashColor = Settings.shared.flashColor
         let flashDuration = 0.15
@@ -74,11 +89,11 @@ package final class OverlayController {
 
         for _ in 0..<3 {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.window.backgroundColor = flashColor
+                self?.setFlashColor(flashColor)
             }
             delay += flashDuration
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.window.backgroundColor = barColor
+                self?.setFlashColor(barColor)
             }
             delay += flashDuration
         }
@@ -88,10 +103,19 @@ package final class OverlayController {
                 context.duration = 0.5
                 self?.window.animator().alphaValue = 0
             }, completionHandler: { [weak self] in
+                self?.isFlashing = false
                 self?.hide()
                 self?.window.alphaValue = 1
                 timerEngine.acknowledge()
             })
+        }
+    }
+
+    private func setFlashColor(_ color: NSColor) {
+        if window.hasNotch {
+            window.shapeLayer?.strokeColor = color.cgColor
+        } else {
+            window.backgroundColor = color
         }
     }
 }
