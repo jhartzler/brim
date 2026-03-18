@@ -28,7 +28,11 @@ for bundle in "${BUILD_DIR}"/Brim_*.bundle; do
     [ -d "$bundle" ] && cp -R "$bundle" "${RESOURCES}/"
 done
 
+# Ad-hoc code sign (required to run on other Macs)
+echo "Code signing..."
+codesign --force --deep -s - "${APP_BUNDLE}"
+
 echo "Built: ${APP_BUNDLE}"
 echo ""
-echo "To run:  build/Brim.app/Contents/MacOS/Brim &"
-echo "To install: cp -R build/Brim.app /Applications/"
+echo "To run:  ${APP_BUNDLE}/Contents/MacOS/${APP_NAME} &"
+echo "To install: cp -R ${APP_BUNDLE} /Applications/"
