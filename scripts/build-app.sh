@@ -23,9 +23,10 @@ cp "${BUILD_DIR}/${APP_NAME}" "${MACOS}/${APP_NAME}"
 cp "Sources/Brim/Info.plist" "${CONTENTS}/Info.plist"
 
 # Copy resources (asset catalog gets compiled during swift build)
-if [ -d "${BUILD_DIR}/Brim_Brim.bundle" ]; then
-    cp -R "${BUILD_DIR}/Brim_Brim.bundle" "${RESOURCES}/"
-fi
+# Copy resource bundles (name changed after library split: Brim_Brim -> Brim_BrimLib)
+for bundle in "${BUILD_DIR}"/Brim_*.bundle; do
+    [ -d "$bundle" ] && cp -R "$bundle" "${RESOURCES}/"
+done
 
 echo "Built: ${APP_BUNDLE}"
 echo ""

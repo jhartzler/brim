@@ -1,5 +1,6 @@
 import AppKit
 import UserNotifications
+import BrimLib
 
 @MainActor
 final class BrimAppDelegate: NSObject, NSApplicationDelegate {

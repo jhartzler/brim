@@ -1,4 +1,5 @@
 import SwiftUI
+import BrimLib
 
 @main
 struct BrimApp: App {
