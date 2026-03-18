@@ -4,6 +4,8 @@ A macOS menu bar timer that displays as a thin colored bar at the very top of yo
 
 On MacBooks with a notch, the bar wraps around the notch in a continuous U-shape.
 
+Written to help me visually keep track of time remaining for tasks in an everpresent but unobtrusive way.
+
 ## Install
 
 ```bash
