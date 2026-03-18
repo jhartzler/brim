@@ -28,6 +28,9 @@ for bundle in "${BUILD_DIR}"/Brim_*.bundle; do
     [ -d "$bundle" ] && cp -R "$bundle" "${RESOURCES}/"
 done
 
+# Strip extended attributes (resource forks break codesign)
+xattr -cr "${APP_BUNDLE}"
+
 # Ad-hoc code sign (required to run on other Macs)
 echo "Code signing..."
 codesign --force --deep -s - "${APP_BUNDLE}"
