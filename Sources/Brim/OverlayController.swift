@@ -14,6 +14,7 @@ package final class OverlayController {
         timerEngine.$progress
             .receive(on: RunLoop.main)
             .sink { [weak self] progress in
+                self?.rebuildIfScreenChanged()
                 self?.window.updateProgress(progress)
             }
             .store(in: &cancellables)
@@ -54,6 +55,12 @@ package final class OverlayController {
         } else {
             window.backgroundColor = color
         }
+    }
+
+    private func rebuildIfScreenChanged() {
+        let activeScreen = NSScreen.main ?? NSScreen.screens[0]
+        guard activeScreen != window.currentScreen else { return }
+        window.rebuild()
     }
 
     private func handleScreenChange(timerEngine: TimerEngine) {

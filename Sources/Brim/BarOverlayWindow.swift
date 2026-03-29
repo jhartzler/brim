@@ -6,6 +6,7 @@ final class BarOverlayWindow: NSWindow {
 
     private(set) var notchGeometry: NotchGeometry?
     private(set) var shapeLayer: CAShapeLayer?
+    private(set) var currentScreen: NSScreen?
 
     var hasNotch: Bool { notchGeometry != nil }
 
@@ -46,6 +47,7 @@ final class BarOverlayWindow: NSWindow {
         isReleasedWhenClosed = false
 
         notchGeometry = notch
+        currentScreen = screen
 
         if let notch {
             setupNotchMode(notch: notch, windowHeight: windowHeight)
@@ -129,6 +131,7 @@ final class BarOverlayWindow: NSWindow {
         shapeLayer?.removeFromSuperlayer()
         shapeLayer = nil
         notchGeometry = nil
+        currentScreen = screen
 
         if let newNotch {
             let windowHeight = newNotch.notchHeight + Self.barHeight
