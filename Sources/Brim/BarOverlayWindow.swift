@@ -98,8 +98,7 @@ final class BarOverlayWindow: NSWindow {
     func repositionFrame(progress: Double = 1.0) {
         let screen = NSScreen.main ?? NSScreen.screens[0]
 
-        if hasNotch {
-            let notch = notchGeometry!
+        if hasNotch, let notch = notchGeometry {
             let windowHeight = notch.notchHeight + Self.barHeight
             let frame = NSRect(
                 x: screen.frame.origin.x,

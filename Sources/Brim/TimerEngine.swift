@@ -20,6 +20,7 @@ package final class TimerEngine: ObservableObject {
     package var isRunning: Bool { state == .running }
 
     package func start(minutes: Double) {
+        guard minutes > 0 else { return }
         stop()
         duration = minutes * 60
         startDate = Date()

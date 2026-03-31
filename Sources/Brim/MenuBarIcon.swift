@@ -9,6 +9,7 @@ package enum MenuBarIcon {
             image.isTemplate = true
             return image
         }
-        return NSImage(systemSymbolName: "timer", accessibilityDescription: "Brim")!
+        return NSImage(systemSymbolName: "timer", accessibilityDescription: "Brim")
+            ?? NSImage()
     }
 }
