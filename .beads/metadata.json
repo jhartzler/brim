@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "brim",
+  "project_id": "be550e0d-514d-4e84-ad95-ad0a800cfdf4"
+}
