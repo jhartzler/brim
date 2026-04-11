@@ -5,6 +5,15 @@ final class SettingsPanel: NSPanel {
 
     static let shared = SettingsPanel()
 
+    // MARK: - Constants
+
+    private let rowHeight: CGFloat = 24
+    private let sectionGap: CGFloat = 18
+    private let rowGap: CGFloat = 10
+    private let sidePadding: CGFloat = 20
+    private let verticalPadding: CGFloat = 18
+    private let panelWidth: CGFloat = 280
+
     // MARK: - Color Wells
 
     private let barColorWell = NSColorWell()
@@ -19,16 +28,20 @@ final class SettingsPanel: NSPanel {
 
     private init() {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 250, height: 190),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 280, height: 320),
+            styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: true
         )
 
-        title = "Settings"
+        title = "Brim Settings"
+        titlebarAppearsTransparent = true
+        titleVisibility = .hidden
         isFloatingPanel = true
         becomesKeyOnlyIfNeeded = true
         hidesOnDeactivate = false
+        isReleasedWhenClosed = false
+        level = .floating
 
         buildContentView()
     }
@@ -39,76 +52,98 @@ final class SettingsPanel: NSPanel {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
         contentView = NSView()
+        contentView!.wantsLayer = true
         contentView!.addSubview(container)
 
         NSLayoutConstraint.activate([
-            container.topAnchor.constraint(equalTo: contentView!.topAnchor, constant: 16),
-            container.leadingAnchor.constraint(equalTo: contentView!.leadingAnchor, constant: 16),
-            container.trailingAnchor.constraint(equalTo: contentView!.trailingAnchor, constant: -16),
-            container.bottomAnchor.constraint(equalTo: contentView!.bottomAnchor, constant: -16),
+            container.topAnchor.constraint(equalTo: contentView!.topAnchor, constant: verticalPadding),
+            container.leadingAnchor.constraint(equalTo: contentView!.leadingAnchor, constant: sidePadding),
+            container.trailingAnchor.constraint(equalTo: contentView!.trailingAnchor, constant: -sidePadding),
+            container.bottomAnchor.constraint(equalTo: contentView!.bottomAnchor, constant: -verticalPadding),
         ])
 
-        // Bar Color row
-        let barLabel = makeLabel("Bar Color")
+        // ── Section: Colors ──
+        let colorsHeader = makeSectionHeader("Colors")
+        let barLabel = makeRowLabel("Bar")
         configureColorWell(barColorWell, color: Settings.shared.barColor, action: #selector(barColorChanged(_:)))
-
-        // Flash Color row
-        let flashLabel = makeLabel("Flash Color")
+        let flashLabel = makeRowLabel("Flash")
         configureColorWell(flashColorWell, color: Settings.shared.flashColor, action: #selector(flashColorChanged(_:)))
 
-        // Bar Opacity row
-        let opacityLabel = makeLabel("Bar Opacity")
+        // ── Section: Opacity ──
+        let opacityHeader = makeSectionHeader("Opacity")
+        let opacityLabel = makeRowLabel("Bar")
         configureAlphaSlider(barAlphaSlider, value: Settings.shared.barAlpha)
-        barAlphaLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        barAlphaLabel.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        barAlphaLabel.textColor = .secondaryLabelColor
         barAlphaLabel.alignment = .right
         barAlphaLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        // Reset button
+        // ── Reset ──
         let resetButton = NSButton(title: "Reset to Defaults", target: self, action: #selector(resetDefaults(_:)))
         resetButton.translatesAutoresizingMaskIntoConstraints = false
         resetButton.bezelStyle = .rounded
-        resetButton.controlSize = .regular
+        resetButton.controlSize = .small
+        resetButton.font = .systemFont(ofSize: 11, weight: .medium)
 
-        for view in [barLabel, barColorWell, flashLabel, flashColorWell, opacityLabel, barAlphaSlider, barAlphaLabel, resetButton] {
+        // ── Separator ──
+        let separator = NSBox()
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.boxType = .separator
+
+        // ── Add all subviews ──
+        for view in [colorsHeader, barLabel, barColorWell, flashLabel, flashColorWell, opacityHeader, opacityLabel, barAlphaSlider, barAlphaLabel, separator, resetButton] {
             container.addSubview(view)
         }
 
         NSLayoutConstraint.activate([
-            // Bar Color row
-            barLabel.topAnchor.constraint(equalTo: container.topAnchor),
+            // Colors section header
+            colorsHeader.topAnchor.constraint(equalTo: container.topAnchor),
+            colorsHeader.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            colorsHeader.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+
+            // Bar color row
+            barLabel.topAnchor.constraint(equalTo: colorsHeader.bottomAnchor, constant: rowGap),
             barLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             barLabel.centerYAnchor.constraint(equalTo: barColorWell.centerYAnchor),
 
-            barColorWell.topAnchor.constraint(equalTo: container.topAnchor),
+            barColorWell.topAnchor.constraint(equalTo: colorsHeader.bottomAnchor, constant: rowGap),
             barColorWell.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            barColorWell.widthAnchor.constraint(equalToConstant: 44),
-            barColorWell.heightAnchor.constraint(equalToConstant: 28),
+            barColorWell.heightAnchor.constraint(equalToConstant: rowHeight),
 
-            // Flash Color row
-            flashLabel.topAnchor.constraint(equalTo: barColorWell.bottomAnchor, constant: 12),
+            // Flash color row
+            flashLabel.topAnchor.constraint(equalTo: barColorWell.bottomAnchor, constant: rowGap),
             flashLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             flashLabel.centerYAnchor.constraint(equalTo: flashColorWell.centerYAnchor),
 
-            flashColorWell.topAnchor.constraint(equalTo: barColorWell.bottomAnchor, constant: 12),
+            flashColorWell.topAnchor.constraint(equalTo: barColorWell.bottomAnchor, constant: rowGap),
             flashColorWell.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            flashColorWell.widthAnchor.constraint(equalToConstant: 44),
-            flashColorWell.heightAnchor.constraint(equalToConstant: 28),
+            flashColorWell.heightAnchor.constraint(equalToConstant: rowHeight),
 
-            // Bar Opacity row
-            opacityLabel.topAnchor.constraint(equalTo: flashColorWell.bottomAnchor, constant: 12),
+            // Opacity section header
+            opacityHeader.topAnchor.constraint(equalTo: flashColorWell.bottomAnchor, constant: sectionGap),
+            opacityHeader.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            opacityHeader.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+
+            // Opacity row
+            opacityLabel.topAnchor.constraint(equalTo: opacityHeader.bottomAnchor, constant: rowGap),
             opacityLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             opacityLabel.centerYAnchor.constraint(equalTo: barAlphaSlider.centerYAnchor),
 
-            barAlphaSlider.topAnchor.constraint(equalTo: flashColorWell.bottomAnchor, constant: 12),
-            barAlphaSlider.leadingAnchor.constraint(equalTo: container.centerXAnchor, constant: -20),
+            barAlphaSlider.topAnchor.constraint(equalTo: opacityHeader.bottomAnchor, constant: rowGap),
+            barAlphaSlider.leadingAnchor.constraint(equalTo: container.centerXAnchor, constant: -30),
             barAlphaSlider.widthAnchor.constraint(equalToConstant: 100),
 
             barAlphaLabel.centerYAnchor.constraint(equalTo: barAlphaSlider.centerYAnchor),
             barAlphaLabel.leadingAnchor.constraint(equalTo: barAlphaSlider.trailingAnchor, constant: 6),
             barAlphaLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
 
+            // Separator
+            separator.topAnchor.constraint(equalTo: barAlphaSlider.bottomAnchor, constant: sectionGap),
+            separator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            separator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+
             // Reset button
-            resetButton.topAnchor.constraint(equalTo: barAlphaSlider.bottomAnchor, constant: 16),
+            resetButton.topAnchor.constraint(equalTo: separator.bottomAnchor, constant: 12),
             resetButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             resetButton.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor),
         ])
@@ -116,10 +151,19 @@ final class SettingsPanel: NSPanel {
 
     // MARK: - Helpers
 
-    private func makeLabel(_ text: String) -> NSTextField {
+    private func makeSectionHeader(_ text: String) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: 11, weight: .semibold)
+        label.textColor = .secondaryLabelColor
+        return label
+    }
+
+    private func makeRowLabel(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 13)
+        label.textColor = .labelColor
         return label
     }
 
@@ -136,6 +180,7 @@ final class SettingsPanel: NSPanel {
         slider.target = self
         slider.action = #selector(barAlphaChanged(_:))
         slider.isContinuous = true
+        slider.controlSize = .small
         updateAlphaLabel(value)
     }
 
@@ -173,7 +218,7 @@ final class SettingsPanel: NSPanel {
             orderOut(nil)
         } else {
             center()
-            orderFrontRegardless()
+            makeKeyAndOrderFront(nil)
         }
     }
 

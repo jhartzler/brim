@@ -5,6 +5,8 @@ set -euo pipefail
 APP_NAME="Brim"
 BUILD_DIR=".build/release"
 APP_BUNDLE="build/${APP_NAME}.app"
+DMG_NAME="Brim.dmg"
+DMG_PATH="build/${DMG_NAME}"
 CONTENTS="${APP_BUNDLE}/Contents"
 MACOS="${CONTENTS}/MacOS"
 RESOURCES="${CONTENTS}/Resources"
@@ -35,7 +37,37 @@ xattr -cr "${APP_BUNDLE}"
 echo "Code signing..."
 codesign --force --deep -s - "${APP_BUNDLE}"
 
+# Verify the app bundle
+echo "Verifying app bundle..."
+codesign --verify --verbose=2 "${APP_BUNDLE}" 2>&1 || true
+
 echo "Built: ${APP_BUNDLE}"
+
+# Create DMG for easy distribution
+echo "Creating DMG..."
+rm -f "${DMG_PATH}"
+
+# Use hdiutil to create a DMG with the app and a symlink to /Applications
+STAGING_DIR=$(mktemp -d)
+cp -R "${APP_BUNDLE}" "${STAGING_DIR}/"
+ln -s /Applications "${STAGING_DIR}/Applications"
+
+hdiutil create \
+    -volname "${APP_NAME}" \
+    -srcfolder "${STAGING_DIR}" \
+    -ov \
+    -format UDZO \
+    "${DMG_PATH}" \
+    2>&1
+
+rm -rf "${STAGING_DIR}"
+
 echo ""
-echo "To run:  ${APP_BUNDLE}/Contents/MacOS/${APP_NAME} &"
-echo "To install: cp -R ${APP_BUNDLE} /Applications/"
+echo "✅ Build complete!"
+echo ""
+echo "  App: ${APP_BUNDLE}"
+echo "  DMG: ${DMG_PATH}"
+echo ""
+echo "To run:       ${APP_BUNDLE}/Contents/MacOS/${APP_NAME} &"
+echo "To install:   cp -R ${APP_BUNDLE} /Applications/"
+echo "To share:     Send the DMG file — open it and drag Brim to Applications"
