@@ -41,6 +41,13 @@ package final class OverlayController {
             }
             .store(in: &cancellables)
 
+        Settings.shared.$barAlpha
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.updateBarColor(Settings.shared.barColor)
+            }
+            .store(in: &cancellables)
+
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
                 self?.handleScreenChange(timerEngine: timerEngine)
@@ -50,10 +57,11 @@ package final class OverlayController {
 
     private func updateBarColor(_ color: NSColor) {
         guard !isFlashing else { return }  // Don't interfere with flash sequence
+        let alphaColor = color.withAlphaComponent(CGFloat(Settings.shared.barAlpha))
         if window.hasNotch {
-            window.shapeLayer?.strokeColor = color.cgColor
+            window.shapeLayer?.strokeColor = alphaColor.cgColor
         } else {
-            window.backgroundColor = color
+            window.backgroundColor = alphaColor
         }
     }
 

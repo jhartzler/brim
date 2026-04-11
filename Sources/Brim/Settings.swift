@@ -9,18 +9,24 @@ final class Settings: ObservableObject {
 
     private enum Key {
         static let barColorHex = "brim.barColorHex"
+        static let barAlpha = "brim.barAlpha"
         static let flashColorHex = "brim.flashColorHex"
     }
 
     // MARK: - Defaults
 
     private static let defaultBarColor: NSColor = .systemBlue
+    private static let defaultBarAlpha: Double = 1.0
     private static let defaultFlashColor: NSColor = .white
 
     // MARK: - Published Properties
 
     @Published var barColor: NSColor {
         didSet { UserDefaults.standard.set(barColor.hexString, forKey: Key.barColorHex) }
+    }
+
+    @Published var barAlpha: Double {
+        didSet { UserDefaults.standard.set(barAlpha, forKey: Key.barAlpha) }
     }
 
     @Published var flashColor: NSColor {
@@ -38,6 +44,8 @@ final class Settings: ObservableObject {
             barColor = Self.defaultBarColor
         }
 
+        barAlpha = defaults.object(forKey: Key.barAlpha) as? Double ?? Self.defaultBarAlpha
+
         if let hex = defaults.string(forKey: Key.flashColorHex) {
             flashColor = NSColor(hex: hex) ?? Self.defaultFlashColor
         } else {
@@ -49,8 +57,10 @@ final class Settings: ObservableObject {
 
     func resetToDefaults() {
         UserDefaults.standard.removeObject(forKey: Key.barColorHex)
+        UserDefaults.standard.removeObject(forKey: Key.barAlpha)
         UserDefaults.standard.removeObject(forKey: Key.flashColorHex)
         barColor = Self.defaultBarColor
+        barAlpha = Self.defaultBarAlpha
         flashColor = Self.defaultFlashColor
     }
 }

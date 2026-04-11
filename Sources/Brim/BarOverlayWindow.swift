@@ -52,7 +52,7 @@ final class BarOverlayWindow: NSWindow {
         if let notch {
             setupNotchMode(notch: notch, windowHeight: windowHeight)
         } else {
-            backgroundColor = Settings.shared.barColor
+            backgroundColor = Settings.shared.barColor.withAlphaComponent(CGFloat(Settings.shared.barAlpha))
         }
     }
 
@@ -66,7 +66,7 @@ final class BarOverlayWindow: NSWindow {
 
         let layer = CAShapeLayer()
         layer.lineWidth = Self.barHeight
-        layer.strokeColor = Settings.shared.barColor.cgColor
+        layer.strokeColor = Settings.shared.barColor.withAlphaComponent(CGFloat(Settings.shared.barAlpha)).cgColor
         layer.fillColor = nil
         layer.lineCap = .round
         layer.path = NotchBarPathBuilder.buildPath(geometry: notch, windowHeight: windowHeight)
@@ -145,7 +145,7 @@ final class BarOverlayWindow: NSWindow {
             )
             setFrame(frame, display: true)
         } else {
-            backgroundColor = Settings.shared.barColor
+            backgroundColor = Settings.shared.barColor.withAlphaComponent(CGFloat(Settings.shared.barAlpha))
             let frame = NSRect(
                 x: screen.frame.origin.x,
                 y: screen.frame.maxY - Self.barHeight,
