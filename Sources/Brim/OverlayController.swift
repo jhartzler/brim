@@ -4,18 +4,19 @@ import UserNotifications
 
 @MainActor
 package final class OverlayController {
-    private let window: BarOverlayWindow
+    /// One window per screen, keyed by the screen's displayID (persistent across frame changes).
+    private var windows: [UInt32: BarOverlayWindow] = [:]
     private var cancellables = Set<AnyCancellable>()
     private var isFlashing = false
 
     package init(timerEngine: TimerEngine) {
-        window = BarOverlayWindow()
+        // Create initial windows for all connected screens
+        rebuildAllWindows()
 
         timerEngine.$progress
             .receive(on: RunLoop.main)
             .sink { [weak self] progress in
-                self?.rebuildIfScreenChanged()
-                self?.window.updateProgress(progress)
+                self?.updateProgress(progress)
             }
             .store(in: &cancellables)
 
@@ -55,38 +56,96 @@ package final class OverlayController {
             .store(in: &cancellables)
     }
 
-    private func updateBarColor(_ color: NSColor) {
-        guard !isFlashing else { return }  // Don't interfere with flash sequence
-        let alphaColor = color.withAlphaComponent(CGFloat(Settings.shared.barAlpha))
-        if window.hasNotch {
-            window.shapeLayer?.strokeColor = alphaColor.cgColor
-        } else {
-            window.backgroundColor = alphaColor
+    // MARK: - Window Management
+
+    /// Rebuild windows for all currently connected screens.
+    /// Removes windows for disconnected screens, creates new ones for new screens,
+    /// and updates existing windows whose screen reference or geometry may have changed.
+    private func rebuildAllWindows() {
+        let currentScreenIDs = Set(NSScreen.screens.map { $0.displayID })
+
+        // Remove windows for screens that no longer exist
+        for id in windows.keys where !currentScreenIDs.contains(id) {
+            windows[id]?.orderOut(nil)
+            windows.removeValue(forKey: id)
+        }
+
+        // Create windows for new screens, update existing windows' screen references
+        for screen in NSScreen.screens {
+            let id = screen.displayID
+            if let existingWindow = windows[id] {
+                // Update screen reference — the NSScreen object's frame may have
+                // changed (resolution, arrangement) even if the displayID is the same.
+                existingWindow.currentScreen = screen
+                existingWindow.rebuild()
+            } else {
+                let window = BarOverlayWindow(screen: screen)
+                windows[id] = window
+            }
         }
     }
 
-    private func rebuildIfScreenChanged() {
-        let activeScreen = NSScreen.main ?? NSScreen.screens[0]
-        guard activeScreen != window.currentScreen else { return }
-        window.rebuild()
+    // MARK: - Progress Visibility
+
+    private func updateProgress(_ progress: Double) {
+        for window in windows.values {
+            window.updateProgress(progress)
+        }
     }
 
+    private func show() {
+        for window in windows.values {
+            window.repositionFrame()
+            window.orderFrontRegardless()
+        }
+    }
+
+    private func hide() {
+        for window in windows.values {
+            window.orderOut(nil)
+        }
+    }
+
+    // MARK: - Color Updates
+
+    private func updateBarColor(_ color: NSColor) {
+        guard !isFlashing else { return }  // Don't interfere with flash sequence
+        let alphaColor = color.withAlphaComponent(CGFloat(Settings.shared.barAlpha))
+        for window in windows.values {
+            if window.hasNotch {
+                window.shapeLayer?.strokeColor = alphaColor.cgColor
+            } else {
+                window.backgroundColor = alphaColor
+            }
+        }
+    }
+
+    private func setFlashColor(_ color: NSColor) {
+        for window in windows.values {
+            if window.hasNotch {
+                window.shapeLayer?.strokeColor = color.cgColor
+            } else {
+                window.backgroundColor = color
+            }
+        }
+    }
+
+    // MARK: - Screen Change Handling
+
     private func handleScreenChange(timerEngine: TimerEngine) {
-        window.rebuild()
-        // Re-show window if timer is currently running
+        // Rebuild all windows for the new screen configuration
+        rebuildAllWindows()
+
+        // Apply current progress to new windows
+        updateProgress(timerEngine.progress)
+
+        // Re-show windows if timer is currently running
         if timerEngine.state == .running {
             show()
         }
     }
 
-    private func show() {
-        window.repositionFrame()
-        window.orderFrontRegardless()
-    }
-
-    private func hide() {
-        window.orderOut(nil)
-    }
+    // MARK: - Flash and Hide
 
     private func flashAndHide(timerEngine: TimerEngine) {
         let content = UNMutableNotificationContent()
@@ -114,23 +173,32 @@ package final class OverlayController {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.3) { [weak self] in
+            guard let self else { return }
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = 0.5
-                self?.window.animator().alphaValue = 0
+                for window in self.windows.values {
+                    window.animator().alphaValue = 0
+                }
             }, completionHandler: { [weak self] in
-                self?.isFlashing = false
-                self?.hide()
-                self?.window.alphaValue = 1
+                guard let self else { return }
+                self.isFlashing = false
+                self.hide()
+                for window in self.windows.values {
+                    window.alphaValue = 1
+                }
                 timerEngine.acknowledge()
             })
         }
     }
+}
 
-    private func setFlashColor(_ color: NSColor) {
-        if window.hasNotch {
-            window.shapeLayer?.strokeColor = color.cgColor
-        } else {
-            window.backgroundColor = color
-        }
+// MARK: - NSScreen displayID extension
+
+extension NSScreen {
+    /// Returns a persistent identifier for this screen that survives frame changes.
+    /// Uses `CGDirectDisplayID` which is stable across resolution changes and
+    /// does not change when the user repositions displays in System Settings.
+    var displayID: UInt32 {
+        return self.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? UInt32 ?? 0
     }
 }

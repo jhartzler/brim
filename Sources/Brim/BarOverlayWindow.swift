@@ -6,29 +6,31 @@ final class BarOverlayWindow: NSWindow {
 
     private(set) var notchGeometry: NotchGeometry?
     private(set) var shapeLayer: CAShapeLayer?
-    private(set) var currentScreen: NSScreen?
+    var currentScreen: NSScreen?
 
     var hasNotch: Bool { notchGeometry != nil }
 
-    init() {
-        let screen = NSScreen.main ?? NSScreen.screens[0]
-        let notch = NotchGeometry.detect(from: screen)
+    /// Create a bar overlay window for a specific screen.
+    /// If no screen is provided, uses NSScreen.main.
+    init(screen: NSScreen? = nil) {
+        let targetScreen = screen ?? NSScreen.main ?? NSScreen.screens[0]
+        let notch = NotchGeometry.detect(from: targetScreen)
 
         let windowHeight: CGFloat
         let windowY: CGFloat
 
         if let notch {
             windowHeight = notch.notchHeight + Self.barHeight
-            windowY = screen.frame.maxY - windowHeight
+            windowY = targetScreen.frame.maxY - windowHeight
         } else {
             windowHeight = Self.barHeight
-            windowY = screen.frame.maxY - Self.barHeight
+            windowY = targetScreen.frame.maxY - Self.barHeight
         }
 
         let frame = NSRect(
-            x: screen.frame.origin.x,
+            x: targetScreen.frame.origin.x,
             y: windowY,
-            width: screen.frame.width,
+            width: targetScreen.frame.width,
             height: windowHeight
         )
 
@@ -47,7 +49,7 @@ final class BarOverlayWindow: NSWindow {
         isReleasedWhenClosed = false
 
         notchGeometry = notch
-        currentScreen = screen
+        currentScreen = targetScreen
 
         if let notch {
             setupNotchMode(notch: notch, windowHeight: windowHeight)
@@ -94,9 +96,11 @@ final class BarOverlayWindow: NSWindow {
         }
     }
 
-    /// Reposition the window frame on screen. Called on show() and rebuild().
+    /// Reposition the window frame on its assigned screen.
+    /// Uses the screen this window was created for rather than NSScreen.main,
+    /// so the bar stays on the correct display even when focus moves.
     func repositionFrame(progress: Double = 1.0) {
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        let screen = currentScreen ?? NSScreen.main ?? NSScreen.screens[0]
 
         if hasNotch, let notch = notchGeometry {
             let windowHeight = notch.notchHeight + Self.barHeight
@@ -121,9 +125,10 @@ final class BarOverlayWindow: NSWindow {
         }
     }
 
-    /// Rebuild for a potentially different screen (notch <-> non-notch).
+    /// Rebuild for a potentially different screen configuration (notch <-> non-notch).
+    /// Uses the window's assigned screen rather than NSScreen.main.
     func rebuild() {
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        let screen = currentScreen ?? NSScreen.main ?? NSScreen.screens[0]
         let newNotch = NotchGeometry.detect(from: screen)
 
         // Clean up old layer if present
