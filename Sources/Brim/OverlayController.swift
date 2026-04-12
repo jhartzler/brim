@@ -156,9 +156,17 @@ package final class OverlayController {
         UNUserNotificationCenter.current().add(request)
 
         isFlashing = true
+
+        // Reset bar to full size so the flash is visible.
+        // By the time the timer finishes, progress is ~0 and the bar has
+        // shrunk to nothing — resetting to full gives the flash something to show.
+        for window in windows.values {
+            window.updateProgress(1.0)
+        }
+
         let barColor = Settings.shared.barColor
         let flashColor = Settings.shared.flashColor
-        let flashDuration = 0.15
+        let flashDuration = 0.25
         var delay = 0.0
 
         for _ in 0..<3 {
