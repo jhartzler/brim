@@ -24,6 +24,9 @@ cp "${BUILD_DIR}/${APP_NAME}" "${MACOS}/${APP_NAME}"
 # Copy Info.plist
 cp "Sources/Brim/Info.plist" "${CONTENTS}/Info.plist"
 
+# Copy app icon (.icns) into top-level Resources so macOS can find it
+cp "Sources/Brim/Resources/AppIcon.icns" "${RESOURCES}/AppIcon.icns"
+
 # Copy resources (asset catalog gets compiled during swift build)
 # Copy resource bundles (name changed after library split: Brim_Brim -> Brim_BrimLib)
 for bundle in "${BUILD_DIR}"/Brim_*.bundle; do
@@ -43,21 +46,23 @@ codesign --verify --verbose=2 "${APP_BUNDLE}" 2>&1 || true
 
 echo "Built: ${APP_BUNDLE}"
 
-# Create DMG for easy distribution
+# Create DMG using create-dmg for proper window sizing and layout
 echo "Creating DMG..."
 rm -f "${DMG_PATH}"
 
-# Use hdiutil to create a DMG with the app and a symlink to /Applications
 STAGING_DIR=$(mktemp -d)
 cp -R "${APP_BUNDLE}" "${STAGING_DIR}/"
-ln -s /Applications "${STAGING_DIR}/Applications"
 
-hdiutil create \
-    -volname "${APP_NAME}" \
-    -srcfolder "${STAGING_DIR}" \
-    -ov \
-    -format UDZO \
+create-dmg \
+    --volname "${APP_NAME} Installer" \
+    --window-pos 200 120 \
+    --window-size 500 300 \
+    --icon-size 100 \
+    --icon "${APP_NAME}.app" 130 120 \
+    --hide-extension "${APP_NAME}.app" \
+    --app-drop-link 360 120 \
     "${DMG_PATH}" \
+    "${STAGING_DIR}" \
     2>&1
 
 rm -rf "${STAGING_DIR}"
